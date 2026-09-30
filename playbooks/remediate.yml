@@ -14,7 +14,7 @@
 
 - name: Check If Process Is Protected
   set_fact:
-    protected_process: "{{ top_process.stdout in protected_processes }}"
+    protected_process: "{{ top_process.stdout | trim in protected_processes }}"
 
 - name: Display Protection Status
   debug:
