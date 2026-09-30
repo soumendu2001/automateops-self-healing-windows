@@ -1,1 +1,8 @@
 
+{
+  "extra_vars": {
+    "incident_number": "INC0012345",
+    "hostname": "windows1",
+    "alert_type": "High CPU Usage"
+  }
+}
