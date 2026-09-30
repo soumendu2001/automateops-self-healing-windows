@@ -2,8 +2,12 @@
 - name: Get CPU Utilization After Remediation
   ansible.windows.win_shell: |
     $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-    [math]::Round($cpu,2)
+    [math\]::Round($cpu,2)
   register: cpu_after
+
+- name: Display CPU After Remediation
+  debug:
+    msg: "CPU Usage After Remediation: {{ cpu_after.stdout }} %"
 
 - name: Verify Connectivity
   ansible.windows.win_ping:
@@ -14,4 +18,4 @@
       - "Host: {{ inventory_hostname }}"
       - "CPU Before: {{ cpu_before.stdout }} %"
       - "CPU After: {{ cpu_after.stdout }} %"
-      - "Status: HEALTHY"
+      - "Threshold: {{ cpu_threshold }} %"
