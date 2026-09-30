@@ -1,3 +1,4 @@
+---
 ansible.windows.win_shell: |
   $proc = Get-Process |
           Sort-Object CPU -Descending |
@@ -6,3 +7,4 @@ ansible.windows.win_shell: |
   Stop-Process -Id $proc.Id -Force
 
   Write-Output $proc.Name
+...
