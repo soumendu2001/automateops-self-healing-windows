@@ -1,1 +1,96 @@
+---
+- name: Display Attempt Number
+  debug:
+    msg: "Remediation Attempt {{ attempt }}"
 
+- name: Get Highest Non-Protected Process
+  ansible.windows.win_shell: |
+    $protected = @(
+      "System",
+      "Idle",
+      "svchost",
+      "lsass",
+      "csrss",
+      "services",
+      "wininit",
+      "winlogon",
+      "MsMpEng",
+      "sqlservr",
+      "explorer"
+    )
+
+    $proc = Get-Process |
+      Sort-Object CPU -Descending |
+      Where-Object { $_.Name -notin $protected } |
+      Select-Object -First 1
+
+    if ($proc) {
+      $proc.Name
+    } else {
+      "NONE"
+    }
+  register: candidate_process
+
+- name: Display Candidate Process
+  debug:
+    msg: "Candidate Process: {{ candidate_process.stdout }}"
+
+- name: Stop Candidate Process
+  ansible.windows.win_shell: |
+    $protected = @(
+      "System",
+      "Idle",
+      "svchost",
+      "lsass",
+      "csrss",
+      "services",
+      "wininit",
+      "winlogon",
+      "MsMpEng",
+      "sqlservr",
+      "explorer"
+    )
+
+    $proc = Get-Process |
+      Sort-Object CPU -Descending |
+      Where-Object { $_.Name -notin $protected } |
+      Select-Object -First 1
+
+    if ($proc) {
+      Stop-Process -Id $proc.Id -Force
+      Write-Output $proc.Name
+    }
+  register: remediation_result
+  when: candidate_process.stdout != "NONE"
+
+- name: Display Remediation Result
+  debug:
+    msg: "Stopped Process: {{ remediation_result.stdout }}"
+  when: candidate_process.stdout != "NONE"
+
+- name: Wait for CPU Stabilization
+  pause:
+    seconds: 5
+
+- name: Recheck CPU
+  ansible.windows.win_shell: |
+    [math\]::Round(
+      (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue,
+      2
+    )
+  register: cpu_check
+
+- name: Display Current CPU
+  debug:
+    msg: "Current CPU: {{ cpu_check.stdout }} %"
+
+- name: Update Current CPU
+  set_fact:
+    current_cpu: "{{ cpu_check.stdout | float }}"
+
+- name: Threshold Reached
+  debug:
+    msg: >
+      CPU dropped below threshold ({{ cpu_threshold }}%).
+      Remediation complete.
+  when: current_cpu | float <= cpu_threshold
