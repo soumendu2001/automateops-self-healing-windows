@@ -1,57 +1,47 @@
 ---
-- name: Initialize Remediation Counter
+- name: Get Highest CPU Process
+  ansible.windows.win_shell: |
+    $proc = Get-Process |
+      Sort-Object CPU -Descending |
+      Select-Object -First 1
+
+    $proc.Name
+  register: top_process
+
+- name: Display Process
+  debug:
+    msg: "Top CPU Process: {{ top_process.stdout }}"
+
+- name: Check If Process Is Protected
   set_fact:
-    remediation_attempt: 0
+    protected_process: "{{ top_process.stdout in protected_processes }}"
 
-- name: Remediation Loop
-  block:
+- name: Display Protection Status
+  debug:
+    msg: >
+      Process {{ top_process.stdout }}
+      Protected = {{ protected_process }}
 
-    - name: Get Highest CPU Process
-      ansible.windows.win_shell: |
-        $proc = Get-Process |
-          Sort-Object CPU -Descending |
-          Select-Object -First 1
+- name: Stop Non-Protected Process
+  ansible.windows.win_shell: |
+    $proc = Get-Process |
+      Sort-Object CPU -Descending |
+      Select-Object -First 1
 
-        $proc.Name
-      register: top_process
+    Stop-Process -Id $proc.Id -Force
 
-    - name: Display Process
-      debug:
-        msg: "Top CPU Process: {{ top_process.stdout }}"
+    Write-Output $proc.Name
+  register: remediation_result
+  when: not protected_process
 
-    - name: Check If Process Is Protected
-      set_fact:
-        protected_process: "{{ top_process.stdout in protected_processes }}"
+- name: Display Remediation Result
+  debug:
+    msg: "Stopped Process: {{ remediation_result.stdout }}"
+  when: not protected_process
 
-    - name: Stop Non-Protected Process
-      ansible.windows.win_shell: |
-        $proc = Get-Process |
-          Sort-Object CPU -Descending |
-          Select-Object -First 1
-
-        Stop-Process -Id $proc.Id -Force
-
-        Write-Output $proc.Name
-      register: remediation_result
-      when: not protected_process
-
-    - name: Wait Before Validation
-      pause:
-        seconds: 10
-
-    - name: Check CPU Again
-      ansible.windows.win_shell: |
-        $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-        [math\]::Round($cpu,2)
-      register: current_cpu
-
-    - name: Display Current CPU
-      debug:
-        msg: "Current CPU: {{ current_cpu.stdout }} %"
-
-    - name: Increment Counter
-      set_fact:
-        remediation_attempt: "{{ remediation_attempt | int + 1 }}"
-
-  loop: "{{ range(0, max_remediation_attempts | int) | list }}"
-  when: current_cpu.stdout | default(cpu_before.stdout) | float > cpu_threshold
+- name: Skip Protected Process
+  debug:
+    msg: >
+      Process {{ top_process.stdout }}
+      is protected. Automated remediation skipped.
+  when: protected_process
