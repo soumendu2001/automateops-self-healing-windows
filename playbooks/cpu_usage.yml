@@ -1,6 +1,6 @@
 ---
 - name: Auto Remediate High CPU
-  hosts: windows
+  hosts: "{{ target_host | default('windows')}}"
   gather_facts: yes
 
   vars:
