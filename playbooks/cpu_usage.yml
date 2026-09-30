@@ -1,1 +1,11 @@
+---
+- name: Auto Remediate High CPU
+  hosts: windows
+  gather_facts: yes
 
+  tasks:
+    - include_tasks: diagnose.yml
+
+    - include_tasks: remediate.yml
+
+    - include_tasks: validate.yml
