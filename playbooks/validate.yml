@@ -9,7 +9,7 @@
 
 - name: Display CPU After Remediation
   debug:
-    msg: "CPU Usage After Remediation: {{ cpu_after.stdout }} %"
+    msg: "CPU Usage After Remediation: {{ cpu_after.stdout | trim }} %"
 
 - name: Verify Connectivity
   ansible.windows.win_ping:
@@ -17,7 +17,7 @@
 - name: CPU Threshold Validation
   debug:
     msg: >
-      CPU remains above threshold ({{ cpu_threshold }}%).
+      CPU remains above threshold ({{ cpu_threshold | trim}}%).
       Manual investigation may be required.
   when:
     - cpu_after.stdout | float > cpu_threshold
@@ -25,7 +25,7 @@
 - name: System Healthy
   debug:
     msg: >
-      CPU is below threshold ({{ cpu_threshold }}%).
+      CPU is below threshold ({{ cpu_threshold | trim }}%).
       System is healthy.
   when:
     - cpu_after.stdout | float <= cpu_threshold
@@ -34,7 +34,7 @@
   debug:
     msg:
       - "Host: {{ inventory_hostname }}"
-      - "CPU Before: {{ cpu_before.stdout }} %"
-      - "CPU After: {{ cpu_after.stdout }} %"
-      - "Threshold: {{ cpu_threshold }} %"
-      - "Status: {{ 'HEALTHY' if (cpu_after.stdout | float <= cpu_threshold) else 'INVESTIGATION_REQUIRED' }}"
+      - "CPU Before: {{ cpu_before.stdout | trim}} %"
+      - "CPU After: {{ cpu_after.stdout | trim }} %"
+      - "Threshold: {{ cpu_threshold | trim }} %"
+      - "Status: {{ 'AUTO_REMEDIATED' if (cpu_after.stdout | float <= cpu_threshold) else 'INVESTIGATION_REQUIRED' }}"
