@@ -1,8 +1,10 @@
 ---
 - name: Get CPU Utilization After Remediation
   ansible.windows.win_shell: |
-    $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-    [math]::Round($cpu,2)
+    [math]::Round(
+      (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue,
+      2
+    )
   register: cpu_after
 
 - name: Display CPU After Remediation
@@ -16,20 +18,23 @@
   debug:
     msg: >
       CPU remains above threshold ({{ cpu_threshold }}%).
-      Additional remediation may be required.
-  when: cpu_after.stdout | float > cpu_threshold
+      Manual investigation may be required.
+  when:
+    - cpu_after.stdout | float > cpu_threshold
 
 - name: System Healthy
   debug:
     msg: >
       CPU is below threshold ({{ cpu_threshold }}%).
-      Remediation successful.
-  when: cpu_after.stdout | float <= cpu_threshold
+      System is healthy.
+  when:
+    - cpu_after.stdout | float <= cpu_threshold
 
-- name: Display Summary
+- name: Display Final Summary
   debug:
     msg:
       - "Host: {{ inventory_hostname }}"
       - "CPU Before: {{ cpu_before.stdout }} %"
       - "CPU After: {{ cpu_after.stdout }} %"
       - "Threshold: {{ cpu_threshold }} %"
+      - "Status: {{ 'HEALTHY' if (cpu_after.stdout | float <= cpu_threshold) else 'INVESTIGATION_REQUIRED' }}"
