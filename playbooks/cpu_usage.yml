@@ -2,6 +2,8 @@
 - name: Auto Remediate High CPU
   hosts: windows
   gather_facts: yes
+  vars:
+    cpu_threshold: 30
 
   tasks:
     - include_tasks: diagnose.yml
