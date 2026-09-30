@@ -2,7 +2,7 @@
 - name: Get CPU Utilization After Remediation
   ansible.windows.win_shell: |
     $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-    [math\]::Round($cpu,2)
+    [math]::Round($cpu,2)
   register: cpu_after
 
 - name: Verify Connectivity
