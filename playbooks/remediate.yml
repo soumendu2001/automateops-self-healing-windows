@@ -1,5 +1,43 @@
 ---
-- name: Stop Highest CPU Process
+- name: Define Protected Processes
+  set_fact:
+    protected_processes:
+      - System
+      - Idle
+      - svchost
+      - lsass
+      - csrss
+      - services
+      - wininit
+      - winlogon
+      - MsMpEng
+      - sqlservr
+      - explorer
+
+- name: Identify Highest CPU Process
+  ansible.windows.win_shell: |
+    $proc = Get-Process |
+      Sort-Object CPU -Descending |
+      Select-Object -First 1
+
+    $proc.Name
+  register: top_process
+
+- name: Display Top Process
+  debug:
+    msg: "Top CPU Process: {{ top_process.stdout }}"
+
+- name: Check If Process Is Protected
+  set_fact:
+    protected_process: "{{ top_process.stdout in protected_processes }}"
+
+- name: Display Protection Status
+  debug:
+    msg: >
+      Process {{ top_process.stdout }}
+      Protected = {{ protected_process }}
+
+- name: Stop Non-Protected Process
   ansible.windows.win_shell: |
     $proc = Get-Process |
       Sort-Object CPU -Descending |
@@ -9,8 +47,17 @@
 
     Write-Output $proc.Name
   register: remediation_result
+  when: not protected_process
 
 - name: Display Remediation Result
   debug:
     msg: "Stopped Process: {{ remediation_result.stdout }}"
-...
+  when: not protected_process
+
+- name: Skip Protected Process
+  debug:
+    msg: >
+      Process {{ top_process.stdout }}
+      is protected. Automated remediation skipped.
+      Manual investigation recommended.
+  when: protected_process
