@@ -74,7 +74,7 @@
 
 - name: Recheck CPU
   ansible.windows.win_shell: |
-    [math\]::Round(
+    [math]::Round(
       (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue,
       2
     )
