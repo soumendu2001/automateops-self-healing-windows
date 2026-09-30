@@ -12,6 +12,20 @@
 - name: Verify Connectivity
   ansible.windows.win_ping:
 
+- name: CPU Threshold Validation
+  debug:
+    msg: >
+      CPU remains above threshold ({{ cpu_threshold }}%).
+      Additional remediation may be required.
+  when: cpu_after.stdout | float > cpu_threshold
+
+- name: System Healthy
+  debug:
+    msg: >
+      CPU is below threshold ({{ cpu_threshold }}%).
+      Remediation successful.
+  when: cpu_after.stdout | float <= cpu_threshold
+
 - name: Display Summary
   debug:
     msg:
