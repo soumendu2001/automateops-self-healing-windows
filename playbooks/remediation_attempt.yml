@@ -84,11 +84,11 @@
 
 - name: Display Current CPU
   debug:
-    msg: "Current CPU: {{ cpu_check.stdout }} %"
+    msg: "Current CPU: {{ cpu_check.stdout | trim}} %"
 
 - name: Update Runtime CPU
   set_fact:
-    current_cpu: "{{ cpu_check.stdout | float }}"
+    current_cpu: "{{ cpu_check.stdout | float | trim }}"
 
 - name: Threshold Reached
   set_fact:
@@ -99,7 +99,7 @@
 - name: Remediation Success
   debug:
     msg: >
-      CPU dropped below threshold ({{ cpu_threshold }}%).
+      CPU dropped below threshold ({{ cpu_threshold | trim }}%).
       Remediation completed successfully.
   when:
     - remediation_complete
