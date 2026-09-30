@@ -2,10 +2,26 @@
 - name: Auto Remediate High CPU
   hosts: windows
   gather_facts: yes
+
   vars:
+
     cpu_threshold: 30
 
+    protected_processes:
+      - System
+      - Idle
+      - svchost
+      - lsass
+      - csrss
+      - services
+      - wininit
+      - winlogon
+      - MsMpEng
+      - sqlservr
+      - explorer
+
   tasks:
+
     - include_tasks: diagnose.yml
 
     - include_tasks: remediate.yml
