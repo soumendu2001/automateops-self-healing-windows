@@ -2,6 +2,9 @@
 - name: Display Attempt Number
   debug:
     msg: "Remediation Attempt {{ attempt_no }}"
+- name: Update Attempt Counter
+  set_fact:
+    remediation_attempt_count: "{{ attempt_no }}"
 
 - name: Get Highest Non-Protected Process
   ansible.windows.win_shell: |
