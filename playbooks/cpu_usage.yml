@@ -6,6 +6,7 @@
   vars:
 
     cpu_threshold: 30
+    max_remediation_attempts: 5
 
     protected_processes:
       - System
