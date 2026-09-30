@@ -1,7 +1,7 @@
 ---
 - name: Display Attempt Number
   debug:
-    msg: "Remediation Attempt {{ attempt }}"
+    msg: "Remediation Attempt {{ attempt_no }}"
 
 - name: Get Highest Non-Protected Process
   ansible.windows.win_shell: |
@@ -33,7 +33,7 @@
 
 - name: Display Candidate Process
   debug:
-    msg: "Candidate Process: {{ candidate_process.stdout }}"
+    msg: "Candidate Process: {{ candidate_process.stdout | trim }}"
 
 - name: Stop Candidate Process
   ansible.windows.win_shell: |
@@ -61,14 +61,16 @@
       Write-Output $proc.Name
     }
   register: remediation_result
-  when: candidate_process.stdout != "NONE"
+  when:
+    - candidate_process.stdout | trim != "NONE"
 
 - name: Display Remediation Result
   debug:
-    msg: "Stopped Process: {{ remediation_result.stdout }}"
-  when: candidate_process.stdout != "NONE"
+    msg: "Stopped Process: {{ remediation_result.stdout | trim }}"
+  when:
+    - candidate_process.stdout | trim != "NONE"
 
-- name: Wait for CPU Stabilization
+- name: Wait For CPU Stabilization
   pause:
     seconds: 5
 
@@ -84,13 +86,20 @@
   debug:
     msg: "Current CPU: {{ cpu_check.stdout }} %"
 
-- name: Update Current CPU
+- name: Update Runtime CPU
   set_fact:
     current_cpu: "{{ cpu_check.stdout | float }}"
 
 - name: Threshold Reached
+  set_fact:
+    remediation_complete: true
+  when:
+    - current_cpu | float <= cpu_threshold
+
+- name: Remediation Success
   debug:
     msg: >
       CPU dropped below threshold ({{ cpu_threshold }}%).
-      Remediation complete.
-  when: current_cpu | float <= cpu_threshold
+      Remediation completed successfully.
+  when:
+    - remediation_complete
