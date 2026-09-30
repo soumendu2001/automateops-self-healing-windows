@@ -1,1 +1,23 @@
 
+---
+- name: Get CPU Utilization
+  ansible.windows.win_shell: |
+    $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
+    [math\]::Round($cpu,2)
+  register: cpu_before
+
+- name: Display CPU Utilization
+  debug:
+    msg: "CPU Usage Before Remediation: {{ cpu_before.stdout }} %"
+
+- name: Get Top Processes
+  ansible.windows.win_shell: |
+    Get-Process |
+    Sort-Object CPU -Descending |
+    Select-Object -First 5 Name,CPU |
+    ConvertTo-Json
+  register: top_processes
+
+- name: Display Top Processes
+  debug:
+    var: top_processes.stdout
