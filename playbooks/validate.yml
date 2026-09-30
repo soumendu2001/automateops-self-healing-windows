@@ -37,4 +37,5 @@
       - "CPU Before: {{ cpu_before.stdout | trim}} %"
       - "CPU After: {{ cpu_after.stdout | trim }} %"
       - "Threshold: {{ cpu_threshold | trim }} %"
+      - "Remediation Attempts: {{ remediation_attempt_count }}"
       - "Status: {{ 'AUTO-REMEDIATED' if (cpu_after.stdout | float <= cpu_threshold) else 'INVESTIGATION REQUIRED' }}"
